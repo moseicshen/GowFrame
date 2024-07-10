@@ -9,21 +9,50 @@ import (
 type H map[string]interface{}
 
 type Context struct {
-	Writer     http.ResponseWriter
-	Req        *http.Request
-	Path       string
-	Method     string
-	Param      map[string]string
+	// original objects
+	Writer http.ResponseWriter
+	Req    *http.Request
+	// request info
+	Path   string
+	Method string
+	Param  map[string]string
+	// response info
 	StatusCode int
+	// middleware
+	handlers  []HandlerFunc
+	index     int
+	midStatus bool
 }
 
 func newContext(w http.ResponseWriter, req *http.Request) *Context {
 	return &Context{
-		Writer: w,
-		Req:    req,
-		Path:   req.URL.Path,
-		Method: req.Method,
+		Writer:    w,
+		Req:       req,
+		Path:      req.URL.Path,
+		Method:    req.Method,
+		index:     -1,
+		midStatus: true,
 	}
+}
+
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
+		if !c.midStatus {
+			break
+		}
+	}
+}
+
+func (c *Context) Abort() {
+	c.midStatus = false
+}
+
+func (c *Context) Fail(code int, err string) {
+	c.index = len(c.handlers)
+	c.JSON(code, H{"message": err})
 }
 
 func (c *Context) ParamValue(key string) string {
