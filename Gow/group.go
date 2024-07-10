@@ -1,5 +1,7 @@
 package gow
 
+import "net/http"
+
 type RouterGroup struct {
 	*router
 	prefix     string
@@ -35,4 +37,8 @@ func (group *RouterGroup) GET(pattern string, handler HandlerFunc) {
 
 func (group *RouterGroup) POST(pattern string, handler HandlerFunc) {
 	group.addRoute("POST", pattern, handler)
+}
+
+func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) {
+	//absolutePath := group.prefix + relativePath
 }

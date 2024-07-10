@@ -14,8 +14,6 @@ type node struct {
 	children []*node
 	// 是否为动态路由（part[0] = '*' 或 part[0] = ':'）
 	isWild bool
-	//中间件
-	middleware []HandlerFunc
 }
 
 // matchChild 第一个找到的点，用于插入

@@ -22,6 +22,8 @@ type Context struct {
 	handlers  []HandlerFunc
 	index     int
 	midStatus bool
+	// engine
+	engine *Engine
 }
 
 func newContext(w http.ResponseWriter, req *http.Request) *Context {

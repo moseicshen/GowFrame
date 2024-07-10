@@ -2,39 +2,31 @@ package main
 
 import (
 	"gow"
+	"log"
 	"net/http"
+	"time"
 )
+
+func forV2() gow.HandlerFunc {
+	return func(c *gow.Context) {
+		t := time.Now()
+		c.Fail(500, "Internal Server Error")
+		log.Printf("v2-[%d] %s in %v", c.StatusCode, c.Req.RequestURI, time.Since(t))
+	}
+}
 
 func main() {
 	r := gow.New()
-	r.GET("/index", func(c *gow.Context) {
-		c.HTML(http.StatusOK, "<h1>Index Page</h1>")
+	r.Use(gow.Logger())
+	r.GET("/", func(c *gow.Context) {
+		c.JSON(200, gow.H{
+			"message": "Hello Gow",
+		})
 	})
-	v1 := r.Group("/v1")
-	{
-		v1.GET("/", func(c *gow.Context) {
-			c.HTML(http.StatusOK, "<h1>Hello Gow</h1>")
-		})
-
-		v1.GET("/hello", func(c *gow.Context) {
-			// expect /hello?name=geektutu
-			c.String(http.StatusOK, "hello v1 %s, you're at %s\n", c.Query("name"), c.Path)
-		})
-	}
 	v2 := r.Group("/v2")
-	{
-		v2.GET("/hello/:name", func(c *gow.Context) {
-			// expect /hello/geektutu
-			c.String(http.StatusOK, "hello v2 %s, you're at %s\n", c.ParamValue("name"), c.Path)
-		})
-		v2.POST("/login", func(c *gow.Context) {
-			c.JSON(http.StatusOK, gow.H{
-				"username": c.PostForm("username"),
-				"password": c.PostForm("password"),
-			})
-		})
-
-	}
-
+	v2.Use(forV2())
+	v2.GET("/hello", func(c *gow.Context) {
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.ParamValue("name"), c.Path)
+	})
 	r.Run(":9999")
 }
